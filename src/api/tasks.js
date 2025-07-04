@@ -2,26 +2,26 @@
  * Get all tasks from api
  * @returns
  */
-const token = localStorage.getItem('token');
-console.log("token",token);
 export const getAllTasks = async () => {
-  try {
-    const myHeaders = new Headers();
-    myHeaders.append("Authorization", `Bearer ${token}`);
+  const token = localStorage.getItem("token");
 
-    var requestOptions = {
-      method: 'GET',
-      headers: myHeaders,
-      redirect: 'follow'
-    };
-
-    const response = await fetch("http://localhost:4000/api/tasks", requestOptions)
-      .then(response => response.json())
-      .catch((error) => {
-          throw error;
-        });
-    return response;
-  } catch (err) {
-    console.error("getAllTasks", err);
+  if (!token) {
+    throw new Error("No token found. Please log in.");
   }
+
+  const response = await fetch("http://localhost:4000/api/tasks", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error("Unauthorized. Please log in again.");
+    }
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  return await response.json();
 };

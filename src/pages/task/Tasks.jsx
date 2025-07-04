@@ -1,6 +1,5 @@
-// src/pages/Tasks.jsx
 import { useEffect, useState } from "react";
-import { getAllTasks } from "../../api/tasks";
+import { getAllTasks } from "../../api/tasks.js";
 import { DataGrid } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
 
@@ -9,11 +8,13 @@ export default function Tasks() {
 
   useEffect(() => {
     getAllTasks()
-      .then((data) => {
-        setTasks(data);
-      })
+      .then((data) => setTasks(data))
       .catch((error) => {
-        console.error("Failed to fetch tasks:", error);
+        console.error("Failed to fetch tasks:", error.message);
+        if (error.message.includes("Unauthorized")) {
+          localStorage.removeItem("token");
+          window.location.href = "/login";
+        }
       });
   }, []);
 
@@ -21,18 +22,14 @@ export default function Tasks() {
     { field: "id", headerName: "ID", width: 70 },
     { field: "title", headerName: "Title", width: 200 },
     { field: "description", headerName: "Description", width: 300 },
-    {
-      field: "status",
-      headerName: "Status",
-      width: 130,
-    },
+    { field: "status", headerName: "Status", width: 130 },
     {
       field: "dueDate",
       headerName: "Due Date",
       width: 180,
       valueGetter: ({ row }) =>
         row?.dueDate ? new Date(row.dueDate).toLocaleDateString() : "—",
-    }
+    },
   ];
 
   return (
