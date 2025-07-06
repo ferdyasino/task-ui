@@ -44,7 +44,7 @@ const Login = () => {
       setSuccess('Login successful! Redirecting...');
       setFormData({ email: '', password: '' });
 
-      setTimeout(() => navigate('/tasks'), 1000);
+      setTimeout(() => navigate('/'), 1000);
     } catch (err) {
       setError(err.message);
     } finally {

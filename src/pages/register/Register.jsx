@@ -56,7 +56,7 @@ const Register = () => {
         throw new Error(data.error || 'Registration failed.');
       }
 
-      navigate('/login');
+      navigate('/');
 
       setSuccess('Registration successful!');
       setForm({
