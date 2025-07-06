@@ -21,6 +21,8 @@ const Login = () => {
     setSuccess('');
     setLoading(true);
 
+    localStorage.removeItem('token');
+
     if (!formData.email || !formData.password) {
       setError('Email and password are required.');
       setLoading(false);
@@ -36,7 +38,7 @@ const Login = () => {
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !data.token) {
         throw new Error(data.error || 'Login failed.');
       }
 
@@ -44,7 +46,9 @@ const Login = () => {
       setSuccess('Login successful! Redirecting...');
       setFormData({ email: '', password: '' });
 
-      setTimeout(() => navigate('/'), 1000);
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
     } catch (err) {
       setError(err.message);
     } finally {

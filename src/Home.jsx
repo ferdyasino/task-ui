@@ -7,7 +7,6 @@ import {
   Button
 } from '@mui/material';
 
-// ---------- CustomTabPanel ----------
 function CustomTabPanel({ children = null, value, index, ...other }) {
   return (
     <div
@@ -33,7 +32,6 @@ CustomTabPanel.propTypes = {
   value: PropTypes.number.isRequired,
 };
 
-// ---------- Main Component ----------
 export default function TaskTabs() {
   const [value, setValue] = useState(0);
 
@@ -41,9 +39,16 @@ export default function TaskTabs() {
     setValue(index);
   };
 
+  const handleLogout = () => {
+    const confirmLogout = window.confirm('Are you sure you want to logout?');
+    if (confirmLogout) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+  };
+
   return (
     <Box sx={{ width: '100%', height: '100vh', overflow: 'hidden' }}>
-      {/* Fixed Navbar */}
       <Box
         sx={{
           position: 'fixed',
@@ -86,10 +91,14 @@ export default function TaskTabs() {
             My Tasks
           </Button>
         </Box>
-        <Button sx={{ color: '#fff', textTransform: 'none' }}>Logout</Button>
+        <Button
+          sx={{ color: '#fff', textTransform: 'none' }}
+          onClick={handleLogout}
+        >
+          Logout
+        </Button>
       </Box>
 
-      {/* Tab Content Wrapper */}
       <Box sx={{ pt: '64px', height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
         <CustomTabPanel value={value} index={0}>
           <Box
