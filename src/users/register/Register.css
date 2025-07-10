@@ -1,0 +1,40 @@
+.register-container {
+  margin-top: 60px;
+  padding: 24px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background-color: #fff;
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+}
+
+.register-header {
+  background-color: #555;
+  color: white;
+  padding: 12px 0;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.4rem;
+  border-radius: 4px 4px 0 0;
+  margin: -24px -24px 16px;
+}
+
+.register-form {
+  margin-top: 8px;
+  text-align: left;
+}
+
+.register-button {
+  margin-top: 16px;
+  padding: 12px;
+  font-weight: bold;
+  background: linear-gradient(to right, #4a90e2, #0052cc);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.register-button:hover {
+  background: linear-gradient(to right, #0052cc, #4a90e2);
+}

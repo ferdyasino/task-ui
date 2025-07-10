@@ -1,5 +1,4 @@
-/* App.css — Clean & Layout-Optimized */
-
+/* Base reset and layout foundation */
 html,
 body,
 #root {
@@ -10,14 +9,18 @@ body,
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   background-color: #ffffff;
   color: #213547;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Optional: Reset all spacing */
-* {
+/* Box model normalization */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-/* Optional utility classes */
+/* Utility classes */
 .full-height {
   height: 100%;
 }
@@ -26,7 +29,8 @@ body,
   width: 100%;
 }
 
-/* You can still keep these if you’re using them */
+/* Optional utility: muted text */
 .read-the-docs {
   color: #888;
+  font-size: 0.875rem;
 }

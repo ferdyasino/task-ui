@@ -2,11 +2,13 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import theme from "./theme";
 import "./App.css";
-import Tasks from "./pages/task/Tasks";
-import Register from "./pages/register/Register";
-import Home from "./Home";
-import Login from "./pages/login/Login";
+import Login from "./users/login/Login";
+import Register from "./users/register/Register";
 import ProtectedRoute from "./assets/components/ProtectedRoute";
+import Home from "./Home";
+import Tasks from "./pages/task/Tasks";
+import ForgotPassword from "./users/ForgotPassword";
+import ResetPassword from "./users/ResetPassword";
 
 function App() {
   return (
@@ -32,6 +34,8 @@ function App() {
           />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Routes>
       </Router>
     </ThemeProvider>

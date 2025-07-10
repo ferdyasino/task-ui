@@ -1,4 +1,4 @@
-/* index.css - Full Layout, MUI-Compatible */
+/* index.css - Optimized for Material UI Layouts */
 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -24,24 +24,32 @@ body,
   width: 100%;
 }
 
-/* Prevent centering everything */
+/* Base body styling */
 body {
   display: block;
   min-height: 100vh;
   background-color: inherit;
   color: inherit;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
-/* Optional: Basic link styling */
+/* Headings reset */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Links */
 a {
-  color: #646cff;
+  color: #4a90e2;
   text-decoration: none;
 }
 a:hover {
-  color: #535bf2;
+  color: #0052cc;
 }
 
-/* Optional: Button baseline styling (can override in MUI theme) */
+/* Buttons (MUI overrides via theme, but this helps non-MUI buttons) */
 button {
   font-family: inherit;
   font-size: 1rem;
@@ -50,20 +58,40 @@ button {
   cursor: pointer;
 }
 
-/* Reset heading spacing (MUI handles sizes) */
-h1, h2, h3, h4, h5, h6 {
-  margin: 0;
-  font-weight: 600;
+/* Focus visible outline (accessibility) */
+:focus-visible {
+  outline: 2px solid #4a90e2;
+  outline-offset: 2px;
 }
 
-/* Optional dark mode support */
+/* Scrollbar styling (WebKit-based browsers) */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Dark mode styling */
 @media (prefers-color-scheme: dark) {
   :root {
     color: rgba(255, 255, 255, 0.87);
-    background-color: #242424;
+    background-color: #1e1e1e;
+  }
+
+  a {
+    color: #81aaff;
   }
 
   a:hover {
-    color: #747bff;
+    color: #b2c6ff;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #444;
   }
 }

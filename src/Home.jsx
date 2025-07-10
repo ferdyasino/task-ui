@@ -4,7 +4,7 @@ import Tasks from './pages/task/Tasks.jsx';
 import {
   Box,
   Typography,
-  Button
+  Button,
 } from '@mui/material';
 
 function CustomTabPanel({ children = null, value, index, ...other }) {
@@ -49,6 +49,7 @@ export default function TaskTabs() {
 
   return (
     <Box sx={{ width: '100%', height: '100vh', overflow: 'hidden' }}>
+      {/* Top navigation bar */}
       <Box
         sx={{
           position: 'fixed',
@@ -56,7 +57,7 @@ export default function TaskTabs() {
           left: 0,
           right: 0,
           zIndex: 1000,
-          backgroundColor: '#5c5c5c',
+          backgroundColor: '#555',
           color: '#fff',
           px: 3,
           py: 1.5,
@@ -75,6 +76,7 @@ export default function TaskTabs() {
               borderBottom: value === 0 ? '2px solid white' : 'none',
               borderRadius: 0,
               textTransform: 'none',
+              fontWeight: value === 0 ? 'bold' : 'normal',
             }}
           >
             Home
@@ -86,19 +88,27 @@ export default function TaskTabs() {
               borderBottom: value === 1 ? '2px solid white' : 'none',
               borderRadius: 0,
               textTransform: 'none',
+              fontWeight: value === 1 ? 'bold' : 'normal',
             }}
           >
             My Tasks
           </Button>
         </Box>
         <Button
-          sx={{ color: '#fff', textTransform: 'none' }}
+          sx={{
+            color: '#fff',
+            textTransform: 'none',
+            '&:hover': {
+              backgroundColor: 'rgba(255,255,255,0.1)',
+            },
+          }}
           onClick={handleLogout}
         >
           Logout
         </Button>
       </Box>
 
+      {/* Main content area */}
       <Box sx={{ pt: '64px', height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
         <CustomTabPanel value={value} index={0}>
           <Box
@@ -107,11 +117,18 @@ export default function TaskTabs() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              textAlign: 'center',
+              px: 2,
             }}
           >
-            <Typography variant="h6">
-              Howdy! Welcome to TaskMan (beta)
-            </Typography>
+            <Box>
+              <Typography variant="h5" fontWeight="bold" gutterBottom>
+                Howdy! Welcome to TaskMan (beta)
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Manage your tasks efficiently and easily.
+              </Typography>
+            </Box>
           </Box>
         </CustomTabPanel>
 

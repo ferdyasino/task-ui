@@ -16,9 +16,10 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  MenuItem
+  MenuItem,
+  Alert,
 } from "@mui/material";
-import { getAllTasks, createTask } from "../../api/tasks.js";
+import { getAllTasks, createTask, deleteTask, updateTask } from "../../api/tasks.js";
 
 const API_BASE = "http://localhost:4000/api/tasks";
 
@@ -58,53 +59,33 @@ export default function Tasks() {
     );
   };
 
-  const handleDeleteTasks = async () => {
-    const token = localStorage.getItem("token");
-    try {
-      for (let id of selected) {
-        const res = await fetch(`${API_BASE}/${id}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error(`Failed to delete task ID ${id}`);
-      }
-      setTasks((prev) => prev.filter((task) => !selected.includes(task.id)));
-      setSelected([]);
-    } catch (err) {
-      console.error("Delete error:", err.message);
-      setError("Failed to delete selected tasks.");
+const _deleteTasks = async () => {
+  try {
+    for (let id of selected) {
+      await deleteTask(id);
     }
-  };
+    setTasks((prev) => prev.filter((task) => !selected.includes(task.id)));
+    setSelected([]);
+    setError("");
+  } catch (err) {
+    console.error("Delete error:", err.message);
+    setError("Failed to delete selected tasks.");
+  }
+};
 
   const handleInputChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-const _submitTask = async () => {
+  const _submitTask = async () => {
   if (!form.title.trim() || !form.dueDate) {
     setError("Title and Due Date are required.");
     return;
   }
 
   try {
-    const token = localStorage.getItem("token");
     if (editingTask) {
-      const response = await fetch(`${API_BASE}/${editingTask.id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error?.error || "Failed to update task.");
-      }
-
-      console.log("Updated task response received");
-      
+      await updateTask(editingTask.id, form);
       await _getAllTasks();
     } else {
       const response = await createTask(form);
@@ -126,7 +107,6 @@ const _submitTask = async () => {
     setError(err.message);
   }
 };
-
 
   const pendingCount = tasks.filter((t) => t.status?.toLowerCase() === "pending").length;
   const doneCount = tasks.filter((t) => t.status?.toLowerCase() === "done").length;
@@ -155,29 +135,37 @@ const _submitTask = async () => {
           My Tasks
         </Typography>
         <Box>
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{ mr: 1 }}
-            onClick={() => {
-              setModalOpen(true);
-              setEditingTask(null);
-              setForm({
-                title: "",
-                description: "",
-                status: "pending",
-                dueDate: "",
-              });
-              setError("");
-            }}
-          >
-            Add Task +
-          </Button>
+          {!editingTask && (
+            <Button
+              variant="contained"
+              sx={{
+                mr: 1,
+                color: 'white',
+                background: 'linear-gradient(to right, #4a90e2, #0052cc)',
+                '&:hover': {
+                  background: 'linear-gradient(to right, #0052cc, #4a90e2)',
+                },
+              }}
+              onClick={() => {
+                setModalOpen(true);
+                setEditingTask(null);
+                setForm({
+                  title: "",
+                  description: "",
+                  status: "pending",
+                  dueDate: "",
+                });
+                setError("");
+              }}
+            >
+              Add Task +
+            </Button>
+          )}
           <Button
             variant="outlined"
             color="error"
             disabled={selected.length === 0}
-            onClick={handleDeleteTasks}
+            onClick={_deleteTasks}
           >
             Delete
           </Button>
@@ -206,7 +194,6 @@ const _submitTask = async () => {
                 key={task.id ?? `row-${index}`}
                 hover
                 onClick={() => {
-                  console.log("Editing task:", task);
                   setEditingTask(task);
                   setModalOpen(true);
                   setForm({
@@ -217,7 +204,6 @@ const _submitTask = async () => {
                   });
                   setError("");
                 }}
-
                 style={{ cursor: "pointer" }}
               >
                 <TableCell padding="checkbox">
@@ -256,17 +242,20 @@ const _submitTask = async () => {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>{editingTask ? "Edit Task" : "Add New Task"}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>
+          {editingTask ? "Edit Task" : "Add New Task"}
+        </DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
-          <TextField
-            fullWidth
-            margin="normal"
-            name="title"
-            label="Title"
-            value={form.title}
-            onChange={handleInputChange}
-            required
-          />
+        <TextField
+          fullWidth
+          margin="normal"
+          name="title"
+          label="Title"
+          value={form.title}
+          onChange={handleInputChange}
+          disabled={!!editingTask}
+          required
+        />
           <TextField
             fullWidth
             margin="normal"
@@ -300,9 +289,9 @@ const _submitTask = async () => {
             inputProps={{ min: new Date().toISOString().split("T")[0] }}
           />
           {error && (
-            <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+            <Alert severity="error" sx={{ mt: 2 }}>
               {error}
-            </Typography>
+            </Alert>
           )}
         </DialogContent>
         <DialogActions>
@@ -314,7 +303,18 @@ const _submitTask = async () => {
           >
             Cancel
           </Button>
-          <Button onClick={_submitTask} variant="contained">
+          <Button
+            onClick={_submitTask}
+            variant="contained"
+            sx={{
+              fontWeight: 'bold',
+              color: 'white',
+              background: 'linear-gradient(to right, #4a90e2, #0052cc)',
+              '&:hover': {
+                background: 'linear-gradient(to right, #0052cc, #4a90e2)',
+              },
+            }}
+          >
             {editingTask ? "Update" : "Add"}
           </Button>
         </DialogActions>

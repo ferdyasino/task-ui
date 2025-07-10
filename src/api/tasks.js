@@ -20,7 +20,6 @@ export const getAllTasks = async () => {
   
   const data = await response.json();
   
-  // 🛡 Ensure it’s always an array
   if (!Array.isArray(data)) {
     console.warn("Expected an array but got:", data);
     return [];
@@ -28,7 +27,6 @@ export const getAllTasks = async () => {
   
   return data;
 };
-
 
 export const createTask = async (taskData) => {
   const token = localStorage.getItem("token");
@@ -48,4 +46,41 @@ export const createTask = async (taskData) => {
 
   const data = await response.json(); 
   return data; 
+};
+
+export const updateTask = async (id, taskData) => {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_BASE}/tasks/${id}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(taskData),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error?.error || "Failed to update task.");
+  }
+
+  return await response.json();
+};
+
+export const deleteTask = async (id) => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE}/tasks/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error?.error || `Failed to delete task ID ${id}`);
+  }
+
+  return true;
 };
