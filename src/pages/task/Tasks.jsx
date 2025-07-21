@@ -19,9 +19,12 @@ import {
   MenuItem,
   Alert,
 } from "@mui/material";
-import { getAllTasks, createTask, deleteTask, updateTask } from "../../api/tasks.js";
-
-const API_BASE = "http://localhost:4000/api/tasks";
+import {
+  getAllTasks,
+  createTask,
+  deleteTask,
+  updateTask,
+} from "../../api/tasks";
 
 export default function Tasks() {
   const [tasks, setTasks] = useState([]);
@@ -40,17 +43,18 @@ export default function Tasks() {
     _getAllTasks();
   }, []);
 
-  const _getAllTasks = () => {
-    getAllTasks()
-      .then((data) => setTasks(data))
-      .catch((error) => {
-        console.error("Failed to fetch tasks:", error.message);
-        setError(error.message);
-        if (error.message.includes("Unauthorized")) {
-          localStorage.removeItem("token");
-          window.location.href = "/login";
-        }
-      });
+  const _getAllTasks = async () => {
+    try {
+      const data = await getAllTasks();
+      setTasks(data);
+    } catch (err) {
+      console.error("Failed to fetch tasks:", err.message);
+      setError(err.message);
+      if (err.message.includes("Unauthorized")) {
+        localStorage.removeItem("authToken");
+        window.location.href = "/login";
+      }
+    }
   };
 
   const toggleSelection = (id) => {
@@ -59,102 +63,77 @@ export default function Tasks() {
     );
   };
 
-const _deleteTasks = async () => {
-  try {
-    for (let id of selected) {
-      await deleteTask(id);
+  const _deleteTasks = async () => {
+    try {
+      for (let id of selected) {
+        await deleteTask(id);
+      }
+      setTasks((prev) => prev.filter((task) => !selected.includes(task.id)));
+      setSelected([]);
+      setError("");
+    } catch (err) {
+      console.error("Delete error:", err.message);
+      setError("Failed to delete selected tasks.");
     }
-    setTasks((prev) => prev.filter((task) => !selected.includes(task.id)));
-    setSelected([]);
-    setError("");
-  } catch (err) {
-    console.error("Delete error:", err.message);
-    setError("Failed to delete selected tasks.");
-  }
-};
+  };
 
   const handleInputChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const _submitTask = async () => {
-  if (!form.title.trim() || !form.dueDate) {
-    setError("Title and Due Date are required.");
-    return;
-  }
-
-  try {
-    if (editingTask) {
-      await updateTask(editingTask.id, form);
-      await _getAllTasks();
-    } else {
-      const response = await createTask(form);
-      const newTask = response.task;
-      setTasks((prev) => [newTask, ...prev]);
+    if (!form.title.trim() || !form.dueDate) {
+      setError("Title and Due Date are required.");
+      return;
     }
 
-    setModalOpen(false);
-    setEditingTask(null);
-    setForm({
-      title: "",
-      description: "",
-      status: "pending",
-      dueDate: "",
-    });
-    setError("");
-  } catch (err) {
-    console.error("Task save error:", err.message);
-    setError(err.message);
-  }
-};
+    try {
+      if (editingTask) {
+        await updateTask(editingTask.id, form);
+        await _getAllTasks();
+      } else {
+        const { task: newTask } = await createTask(form);
+        setTasks((prev) => [newTask, ...prev]);
+      }
+
+      setModalOpen(false);
+      setEditingTask(null);
+      setForm({
+        title: "",
+        description: "",
+        status: "pending",
+        dueDate: "",
+      });
+      setError("");
+    } catch (err) {
+      console.error("Task save error:", err.message);
+      setError(err.message);
+    }
+  };
 
   const pendingCount = tasks.filter((t) => t.status?.toLowerCase() === "pending").length;
   const doneCount = tasks.filter((t) => t.status?.toLowerCase() === "done").length;
 
   return (
-    <Box
-      sx={{
-        height: "100%",
-        width: "100%",
-        px: 2,
-        py: 2,
-        boxSizing: "border-box",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 2,
-        }}
-      >
-        <Typography variant="h6" fontWeight="bold">
-          My Tasks
-        </Typography>
+    <Box sx={{ p: 2, display: "flex", flexDirection: "column", height: "100%" }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+        <Typography variant="h6" fontWeight="bold">My Tasks</Typography>
         <Box>
           {!editingTask && (
             <Button
               variant="contained"
               sx={{
                 mr: 1,
-                color: 'white',
-                background: 'linear-gradient(to right, #4a90e2, #0052cc)',
-                '&:hover': {
-                  background: 'linear-gradient(to right, #0052cc, #4a90e2)',
+                color: "white",
+                background: "linear-gradient(to right, #4a90e2, #0052cc)",
+                "&:hover": {
+                  background: "linear-gradient(to right, #0052cc, #4a90e2)",
                 },
               }}
               onClick={() => {
                 setModalOpen(true);
                 setEditingTask(null);
-                setForm({
-                  title: "",
-                  description: "",
-                  status: "pending",
-                  dueDate: "",
-                });
+                setForm({ title: "", description: "", status: "pending", dueDate: "" });
                 setError("");
               }}
             >
@@ -172,16 +151,11 @@ const _deleteTasks = async () => {
         </Box>
       </Box>
 
-      <TableContainer
-        component={Paper}
-        sx={{ flex: 1, border: "1px solid #ddd", minHeight: 300 }}
-      >
+      <TableContainer component={Paper} sx={{ flex: 1, border: "1px solid #ddd" }}>
         <Table size="small">
           <TableHead sx={{ backgroundColor: "#f4f4f4" }}>
             <TableRow>
-              <TableCell padding="checkbox">
-                <Checkbox disabled />
-              </TableCell>
+              <TableCell padding="checkbox"><Checkbox disabled /></TableCell>
               <TableCell><strong>Title</strong></TableCell>
               <TableCell><strong>Description</strong></TableCell>
               <TableCell><strong>Status</strong></TableCell>
@@ -227,9 +201,9 @@ const _deleteTasks = async () => {
         </Table>
       </TableContainer>
 
-      <Box sx={{ mt: 2, display: "flex", justifyContent: "space-between" }}>
+      <Box sx={{ mt: 2 }}>
         <Typography variant="body2">
-          {tasks.length} tasks total — {pendingCount} pending, {doneCount} done
+          {tasks.length} tasks — {pendingCount} pending, {doneCount} done
         </Typography>
       </Box>
 
@@ -242,20 +216,20 @@ const _deleteTasks = async () => {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle sx={{ fontWeight: 'bold' }}>
+        <DialogTitle sx={{ fontWeight: "bold" }}>
           {editingTask ? "Edit Task" : "Add New Task"}
         </DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
-        <TextField
-          fullWidth
-          margin="normal"
-          name="title"
-          label="Title"
-          value={form.title}
-          onChange={handleInputChange}
-          disabled={!!editingTask}
-          required
-        />
+          <TextField
+            fullWidth
+            margin="normal"
+            name="title"
+            label="Title"
+            value={form.title}
+            onChange={handleInputChange}
+            disabled={!!editingTask}
+            required
+          />
           <TextField
             fullWidth
             margin="normal"
@@ -288,11 +262,7 @@ const _deleteTasks = async () => {
             InputLabelProps={{ shrink: true }}
             inputProps={{ min: new Date().toISOString().split("T")[0] }}
           />
-          {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
-            </Alert>
-          )}
+          {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
         </DialogContent>
         <DialogActions>
           <Button
@@ -307,11 +277,11 @@ const _deleteTasks = async () => {
             onClick={_submitTask}
             variant="contained"
             sx={{
-              fontWeight: 'bold',
-              color: 'white',
-              background: 'linear-gradient(to right, #4a90e2, #0052cc)',
-              '&:hover': {
-                background: 'linear-gradient(to right, #0052cc, #4a90e2)',
+              fontWeight: "bold",
+              color: "white",
+              background: "linear-gradient(to right, #4a90e2, #0052cc)",
+              "&:hover": {
+                background: "linear-gradient(to right, #0052cc, #4a90e2)",
               },
             }}
           >

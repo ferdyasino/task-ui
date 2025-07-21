@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Tasks from './pages/task/Tasks.jsx';
+import ProfileDashboard from './assets/components/ProfileDashboard.jsx';
 import {
   Box,
   Typography,
@@ -68,32 +69,26 @@ export default function TaskTabs() {
           height: '64px',
         }}
       >
+        {/* Left tabs */}
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            onClick={() => handleTabClick(0)}
-            sx={{
-              color: value === 0 ? '#fff' : '#bbb',
-              borderBottom: value === 0 ? '2px solid white' : 'none',
-              borderRadius: 0,
-              textTransform: 'none',
-              fontWeight: value === 0 ? 'bold' : 'normal',
-            }}
-          >
-            Home
-          </Button>
-          <Button
-            onClick={() => handleTabClick(1)}
-            sx={{
-              color: value === 1 ? '#fff' : '#bbb',
-              borderBottom: value === 1 ? '2px solid white' : 'none',
-              borderRadius: 0,
-              textTransform: 'none',
-              fontWeight: value === 1 ? 'bold' : 'normal',
-            }}
-          >
-            My Tasks
-          </Button>
+          {['Home', 'My Tasks', 'Profile'].map((label, index) => (
+            <Button
+              key={label}
+              onClick={() => handleTabClick(index)}
+              sx={{
+                color: value === index ? '#fff' : '#bbb',
+                borderBottom: value === index ? '2px solid white' : 'none',
+                borderRadius: 0,
+                textTransform: 'none',
+                fontWeight: value === index ? 'bold' : 'normal',
+              }}
+            >
+              {label}
+            </Button>
+          ))}
         </Box>
+
+        {/* Right logout */}
         <Button
           sx={{
             color: '#fff',
@@ -108,7 +103,7 @@ export default function TaskTabs() {
         </Button>
       </Box>
 
-      {/* Main content area */}
+      {/* Main content */}
       <Box sx={{ pt: '64px', height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
         <CustomTabPanel value={value} index={0}>
           <Box
@@ -134,6 +129,10 @@ export default function TaskTabs() {
 
         <CustomTabPanel value={value} index={1}>
           <Tasks />
+        </CustomTabPanel>
+
+        <CustomTabPanel value={value} index={2}>
+          <ProfileDashboard />
         </CustomTabPanel>
       </Box>
     </Box>

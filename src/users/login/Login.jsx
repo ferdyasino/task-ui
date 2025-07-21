@@ -10,9 +10,11 @@ import {
   Alert,
 } from '@mui/material';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
-const Login = () => {
+const LoginForm = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
@@ -38,23 +40,27 @@ const Login = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:4000/api/users/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
+      // const response = await fetch('http://localhost:4000/api/users/login', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(formData),
+      // });
 
-      const data = await response.json();
+      // const data = await response.json();
 
-      if (!response.ok || !data.token) {
-        throw new Error(data.error || 'Login failed.');
-      }
+      // if (!response.ok || !data.token) {
+      //   throw new Error(data.error || 'Login failed.');
+      // }
 
-      localStorage.setItem('token', data.token);
+      // localStorage.setItem('token', data.token);
+      // setSuccess('Login successful! Redirecting...');
+      // setFormData({ email: '', password: '' });
+
+      // setTimeout(() => navigate('/'), 1000);
+      await login(formData);
       setSuccess('Login successful! Redirecting...');
       setFormData({ email: '', password: '' });
-
-      setTimeout(() => navigate('/'), 1000);
+      setTimeout(() => navigate('/'), 1000);  
     } catch (err) {
       setError(err.message);
     } finally {
@@ -144,4 +150,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default LoginForm;
