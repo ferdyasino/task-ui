@@ -1,16 +1,18 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import API_BASE_URL from "../api/apiConfig"; 
 
-// Create context
 const AuthContext = createContext(null);
 AuthContext.displayName = "AuthContext";
 
-// Provider
+let externalLogout = () => {}; // globally accessible logout
+
 export const AuthProvider = ({ children }) => {
   const [authData, setAuthData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Check stored token on load
   useEffect(() => {
+    externalLogout = logout;
+
     const stored = localStorage.getItem("authToken");
     if (!stored) {
       setLoading(false);
@@ -35,9 +37,8 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Login method
   const login = async ({ email, password }) => {
-    const response = await fetch("http://localhost:4000/api/users/login", {
+    const response = await fetch(`${API_BASE_URL}/users/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -49,33 +50,28 @@ export const AuthProvider = ({ children }) => {
     }
 
     const data = await response.json();
-    const authData = {
-      user: data.user,
-      token: data.token,
-    };
+    const authData = { user: data.user, token: data.token };
 
     localStorage.setItem("authToken", JSON.stringify(authData));
     setAuthData(authData);
   };
 
-  // Logout method
   const logout = () => {
     localStorage.removeItem("authToken");
     setAuthData(null);
-    // Optionally redirect:
-    // window.location.href = '/login';
   };
 
   const isAuthenticated = !!authData;
+  const user = authData?.user;
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, authData, login, logout, loading }}
+      value={{ isAuthenticated, authData, user, login, logout, loading }}
     >
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Hook
 export const useAuth = () => useContext(AuthContext);
+export const getExternalLogout = () => externalLogout;

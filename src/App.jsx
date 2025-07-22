@@ -7,9 +7,9 @@ import "./App.css";
 import Login from "./users/login/Login";
 import Register from "./users/register/Register";
 import ProtectedRoute from "./assets/components/ProtectedRoute";
-import Home from "./Home";
+import Home from "./pages/Home";
 import Tasks from "./pages/task/Tasks";
-import ProfileDashboard from "./assets/components/ProfileDashboard";
+import ProfileDashboard from "./users/profile/ProfileDashboard";
 import ForgotPassword from "./users/ForgotPassword";
 import ResetPassword from "./users/ResetPassword";
 

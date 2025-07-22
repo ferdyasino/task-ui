@@ -207,15 +207,17 @@ export default function Tasks() {
         </Typography>
       </Box>
 
-      <Dialog
-        open={modalOpen}
-        onClose={() => {
-          setModalOpen(false);
-          setEditingTask(null);
-        }}
-        fullWidth
-        maxWidth="sm"
-      >
+        <Dialog
+          open={modalOpen}
+          onClose={(event, reason) => {
+            if (reason !== "backdropClick") {
+              setModalOpen(false);
+              setEditingTask(null);
+            }
+          }}
+          fullWidth
+          maxWidth="sm"
+        >
         <DialogTitle sx={{ fontWeight: "bold" }}>
           {editingTask ? "Edit Task" : "Add New Task"}
         </DialogTitle>

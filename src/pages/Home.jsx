@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import Tasks from './pages/task/Tasks.jsx';
-import ProfileDashboard from './assets/components/ProfileDashboard.jsx';
+import Tasks from './task/Tasks.jsx';
+import ProfileDashboard from '../users/profile/ProfileDashboard.jsx';
+import { getExternalLogout } from '../context/AuthContext.jsx';
 import {
   Box,
   Typography,
@@ -43,10 +44,11 @@ export default function TaskTabs() {
   const handleLogout = () => {
     const confirmLogout = window.confirm('Are you sure you want to logout?');
     if (confirmLogout) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      getExternalLogout()(); // triggers logout and clears auth
+      window.location.href = '/login'; // redirect after logout
     }
   };
+
 
   return (
     <Box sx={{ width: '100%', height: '100vh', overflow: 'hidden' }}>

@@ -7,6 +7,7 @@ import {
   CircularProgress,
   Paper,
 } from "@mui/material";
+import fetchWithAuth from "../../api/apiClient";
 
 const ProfileDashboard = () => {
   const { isAuthenticated, authData, logout } = useAuth();
@@ -16,17 +17,7 @@ const ProfileDashboard = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch("http://localhost:4000/api/users/profile", {
-          headers: {
-            Authorization: `Bearer ${authData.token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch user data");
-        }
-
-        const data = await response.json();
+        const data = await fetchWithAuth("/users/profile", { method: "GET" });
         setUserData(data);
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -42,9 +33,9 @@ const ProfileDashboard = () => {
     }
   }, [authData]);
 
-  if (!authData?.token) {
+  if (!isAuthenticated) {
     return (
-      <Box
+      <Box  
         sx={{
           display: "flex",
           flexDirection: "column",
@@ -103,12 +94,6 @@ const ProfileDashboard = () => {
             : "Unknown"}
         </Typography>
       </Box>
-
-      {/* <Box mt={3}>
-        <Button variant="contained" color="primary" onClick={logout}>
-          Logout
-        </Button>
-      </Box> */}
     </Box>
   );
 };
