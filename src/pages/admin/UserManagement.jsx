@@ -225,7 +225,11 @@ export default function UserManagement() {
 
       <Dialog
         open={modalOpen}
-        onClose={_closeModal}
+        onClose={(e, reason) => {
+          if (reason !== "backdropClick") {
+            _closeModal();
+          }
+        }}
         fullWidth
         maxWidth="sm"
         disableRestoreFocus // Prevent focus issues
@@ -252,6 +256,7 @@ export default function UserManagement() {
             value={form.email}
             onChange={handleInputChange}
             required
+            disabled={editingUser}
             error={!!error && error.includes("Email")}
           />
           <TextField
