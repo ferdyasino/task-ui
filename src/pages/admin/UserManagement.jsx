@@ -38,17 +38,38 @@ export default function UserManagement() {
     }
   };
 
+  // const _deleteUsers = async () => {
+  //   try {
+  //     for (let id of selected) {
+  //       await deleteUser(id, token);
+  //     }
+  //     setUsers(users.filter((u) => !selected.includes(u.id)));
+  //     setSelected([]);
+  //     setError("");
+  //   } catch (err) {
+  //     console.error("Delete users error:", err);
+  //     setError(err.message || "Failed to delete users.");
+  //   }
+  // };
   const _deleteUsers = async () => {
+    // Prevent self-deletion first
+    if (selected.includes(user.userId)) {
+      setError("⚠️ You cannot delete your own account.");
+      return;
+    }
+
     try {
       for (let id of selected) {
         await deleteUser(id, token);
       }
+
       setUsers(users.filter((u) => !selected.includes(u.id)));
       setSelected([]);
       setError("");
     } catch (err) {
       console.error("Delete users error:", err);
-      setError(err.message || "Failed to delete users.");
+      const serverMsg = err.response?.data?.error;
+      setError(serverMsg || "Failed to delete users.");
     }
   };
 
@@ -133,9 +154,9 @@ export default function UserManagement() {
     setForm({
       name: u.name,
       email: u.email,
-      role: u.role === "administrator" ? "admin" : u.role, // Map administrator to admin
-      password: "******", // Masked for editing
-      birthDate: u.birthDate ? u.birthDate.split("T")[0] : "", // Format for input
+      role: u.role === "administrator" ? "admin" : u.role,
+      password: "******",
+      birthDate: u.birthDate ? u.birthDate.split("T")[0] : "", // Format to YYYY-MM-DD
     });
     setModalOpen(true);
     setError("");
@@ -186,10 +207,11 @@ export default function UserManagement() {
                 onClick={() => openEditUser(u)}
               >
                 <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
-                  <Checkbox
-                    checked={selected.includes(u.id)}
-                    onChange={() => toggleSelection(u.id)}
-                  />
+                <Checkbox
+                  checked={selected.includes(u.id)}
+                  onChange={() => toggleSelection(u.id)}
+                  disabled={u.id === user?.id}
+                />
                 </TableCell>
                 <TableCell>{u.name}</TableCell>
                 <TableCell>{u.email}</TableCell>

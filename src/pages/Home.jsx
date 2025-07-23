@@ -116,7 +116,7 @@ export default function TaskTabs() {
               fontWeight: value === 1 ? 'bold' : 'normal',
             }}
           >
-            My Tasks
+           {isAdmin ? 'All Tasks' : 'My Tasks'}
           </Button>
 
           {isAdmin && (
