@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import Tasks from './task/Tasks.jsx';
 import ProfileDashboard from '../users/profile/ProfileDashboard.jsx';
-import { getExternalLogout } from '../context/AuthContext.jsx';
+import Users from './admin/UserManagement.jsx';
+import { useAuth, getExternalLogout } from '../context/AuthContext.jsx';
+
 import {
   Box,
   Typography,
   Button,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 
 function CustomTabPanel({ children = null, value, index, ...other }) {
@@ -36,9 +40,21 @@ CustomTabPanel.propTypes = {
 
 export default function TaskTabs() {
   const [value, setValue] = useState(0);
+  const { user } = useAuth(); // Get user info
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const isAdmin = user?.role === 'admin';
 
   const handleTabClick = (index) => {
     setValue(index);
+  };
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
   };
 
   const handleLogout = () => {
@@ -49,6 +65,10 @@ export default function TaskTabs() {
     }
   };
 
+  const handleProfileClick = () => {
+    setValue(2); // Profile index
+    handleMenuClose();
+  };
 
   return (
     <Box sx={{ width: '100%', height: '100vh', overflow: 'hidden' }}>
@@ -71,38 +91,68 @@ export default function TaskTabs() {
           height: '64px',
         }}
       >
-        {/* Left tabs */}
+        {/* Left Tabs */}
         <Box sx={{ display: 'flex', gap: 2 }}>
-          {['Home', 'My Tasks', 'Profile'].map((label, index) => (
+          <Button
+            onClick={() => handleTabClick(0)}
+            sx={{
+              color: value === 0 ? '#fff' : '#bbb',
+              borderBottom: value === 0 ? '2px solid white' : 'none',
+              borderRadius: 0,
+              textTransform: 'none',
+              fontWeight: value === 0 ? 'bold' : 'normal',
+            }}
+          >
+            Home
+          </Button>
+
+          <Button
+            onClick={() => handleTabClick(1)}
+            sx={{
+              color: value === 1 ? '#fff' : '#bbb',
+              borderBottom: value === 1 ? '2px solid white' : 'none',
+              borderRadius: 0,
+              textTransform: 'none',
+              fontWeight: value === 1 ? 'bold' : 'normal',
+            }}
+          >
+            My Tasks
+          </Button>
+
+          {isAdmin && (
             <Button
-              key={label}
-              onClick={() => handleTabClick(index)}
+              onClick={() => handleTabClick(3)} // User Management index
               sx={{
-                color: value === index ? '#fff' : '#bbb',
-                borderBottom: value === index ? '2px solid white' : 'none',
+                color: value === 3 ? '#fff' : '#bbb',
+                borderBottom: value === 3 ? '2px solid white' : 'none',
                 borderRadius: 0,
                 textTransform: 'none',
-                fontWeight: value === index ? 'bold' : 'normal',
+                fontWeight: value === 3 ? 'bold' : 'normal',
               }}
             >
-              {label}
+              User Management
             </Button>
-          ))}
+          )}
         </Box>
 
-        {/* Right logout */}
-        <Button
-          sx={{
-            color: '#fff',
-            textTransform: 'none',
-            '&:hover': {
-              backgroundColor: 'rgba(255,255,255,0.1)',
-            },
-          }}
-          onClick={handleLogout}
-        >
-          Logout
-        </Button>
+        {/* Right: Profile Dropdown */}
+        <Box>
+          <Button
+            onClick={handleMenuClick}
+            sx={{
+              color: '#fff',
+              textTransform: 'none',
+              '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' },
+            }}
+          >
+            {user?.name || 'Profile'}
+          </Button>
+
+          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+            <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
+            <MenuItem onClick={handleLogout}>Logout</MenuItem>
+          </Menu>
+        </Box>
       </Box>
 
       {/* Main content */}
@@ -136,6 +186,12 @@ export default function TaskTabs() {
         <CustomTabPanel value={value} index={2}>
           <ProfileDashboard />
         </CustomTabPanel>
+
+        {isAdmin && (
+          <CustomTabPanel value={value} index={3}>
+            <Users />
+          </CustomTabPanel>
+        )}
       </Box>
     </Box>
   );
