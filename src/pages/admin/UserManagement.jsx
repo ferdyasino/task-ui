@@ -38,23 +38,10 @@ export default function UserManagement() {
     }
   };
 
-  // const _deleteUsers = async () => {
-  //   try {
-  //     for (let id of selected) {
-  //       await deleteUser(id, token);
-  //     }
-  //     setUsers(users.filter((u) => !selected.includes(u.id)));
-  //     setSelected([]);
-  //     setError("");
-  //   } catch (err) {
-  //     console.error("Delete users error:", err);
-  //     setError(err.message || "Failed to delete users.");
-  //   }
-  // };
   const _deleteUsers = async () => {
     // Prevent self-deletion first
     if (selected.includes(user.userId)) {
-      setError("⚠️ You cannot delete your own account.");
+      setError("You cannot delete your own account.");
       return;
     }
 
