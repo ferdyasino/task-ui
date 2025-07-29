@@ -31,6 +31,7 @@ export default function Tasks() {
   const [selected, setSelected] = useState([]);
   const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [confirmPastDate, setConfirmPastDate] = useState(false);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -81,34 +82,57 @@ export default function Tasks() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const _submitTask = async () => {
+  const _submitTask = () => {
     if (!form.title.trim() || !form.dueDate) {
       setError("Title and Due Date are required.");
       return;
     }
 
+    // Duplicate title check (case-insensitive, ignore same task)
+    const duplicate = tasks.some(
+      (t) =>
+        t.title.trim().toLowerCase() === form.title.trim().toLowerCase() &&
+        t.id !== editingTask?.id
+    );
+    if (duplicate) {
+      setError("A task with this title already exists.");
+      return;
+    }
+
+    // Past due date check
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(form.dueDate);
+
+    if (selectedDate < today) {
+      setConfirmPastDate(true);
+      return;
+    }
+
+    _saveTask();
+  };
+
+  const _saveTask = async () => {
     try {
       if (editingTask) {
         await updateTask(editingTask.id, form);
-        await _getAllTasks();
       } else {
-        const { task: newTask } = await createTask(form);
-        setTasks((prev) => [newTask, ...prev]);
+        await createTask(form);
       }
-
-      setModalOpen(false);
-      setEditingTask(null);
-      setForm({
-        title: "",
-        description: "",
-        status: "pending",
-        dueDate: "",
-      });
-      setError("");
+      await _getAllTasks();
+      _resetForm();
     } catch (err) {
       console.error("Task save error:", err.message);
       setError(err.message);
     }
+  };
+
+  const _resetForm = () => {
+    setModalOpen(false);
+    setEditingTask(null);
+    setForm({ title: "", description: "", status: "pending", dueDate: "" });
+    setError("");
+    setConfirmPastDate(false);
   };
 
   const pendingCount = tasks.filter((t) => t.status?.toLowerCase() === "pending").length;
@@ -116,6 +140,7 @@ export default function Tasks() {
 
   return (
     <Box sx={{ p: 2, display: "flex", flexDirection: "column", height: "100%" }}>
+      {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
         <Typography variant="h6" fontWeight="bold">My Tasks</Typography>
         <Box>
@@ -151,6 +176,7 @@ export default function Tasks() {
         </Box>
       </Box>
 
+      {/* Task Table */}
       <TableContainer component={Paper} sx={{ flex: 1, border: "1px solid #ddd" }}>
         <Table size="small">
           <TableHead sx={{ backgroundColor: "#f4f4f4" }}>
@@ -201,23 +227,15 @@ export default function Tasks() {
         </Table>
       </TableContainer>
 
+      {/* Task Stats */}
       <Box sx={{ mt: 2 }}>
         <Typography variant="body2">
           {tasks.length} tasks — {pendingCount} pending, {doneCount} done
         </Typography>
       </Box>
 
-        <Dialog
-          open={modalOpen}
-          onClose={(event, reason) => {
-            if (reason !== "backdropClick") {
-              setModalOpen(false);
-              setEditingTask(null);
-            }
-          }}
-          fullWidth
-          maxWidth="sm"
-        >
+      {/* Task Form Dialog */}
+      <Dialog open={modalOpen} onClose={_resetForm} fullWidth maxWidth="sm">
         <DialogTitle sx={{ fontWeight: "bold" }}>
           {editingTask ? "Edit Task" : "Add New Task"}
         </DialogTitle>
@@ -229,7 +247,6 @@ export default function Tasks() {
             label="Title"
             value={form.title}
             onChange={handleInputChange}
-            disabled={!!editingTask}
             required
           />
           <TextField
@@ -262,19 +279,11 @@ export default function Tasks() {
             value={form.dueDate}
             onChange={handleInputChange}
             InputLabelProps={{ shrink: true }}
-            inputProps={{ min: new Date().toISOString().split("T")[0] }}
           />
           {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => {
-              setModalOpen(false);
-              setEditingTask(null);
-            }}
-          >
-            Cancel
-          </Button>
+          <Button onClick={_resetForm}>Cancel</Button>
           <Button
             onClick={_submitTask}
             variant="contained"
@@ -288,6 +297,27 @@ export default function Tasks() {
             }}
           >
             {editingTask ? "Update" : "Add"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Past Due Date Confirmation */}
+      <Dialog open={confirmPastDate} onClose={() => setConfirmPastDate(false)}>
+        <DialogTitle>Past Due Date</DialogTitle>
+        <DialogContent>
+          The selected due date is in the past. Are you sure you want to proceed?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmPastDate(false)}>Cancel</Button>
+          <Button
+            onClick={() => {
+              setConfirmPastDate(false);
+              _saveTask();
+            }}
+            variant="contained"
+            color="warning"
+          >
+            Proceed Anyway
           </Button>
         </DialogActions>
       </Dialog>
