@@ -82,35 +82,49 @@ export default function Tasks() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const _submitTask = () => {
-    if (!form.title.trim() || !form.dueDate) {
-      setError("Title and Due Date are required.");
-      return;
-    }
+const _submitTask = () => {
+  if (!form.title.trim() || !form.dueDate) {
+    setError("Title and Due Date are required.");
+    return;
+  }
 
-    // Duplicate title check (case-insensitive, ignore same task)
-    const duplicate = tasks.some(
-      (t) =>
-        t.title.trim().toLowerCase() === form.title.trim().toLowerCase() &&
-        t.id !== editingTask?.id
-    );
-    if (duplicate) {
-      setError("A task with this title already exists.");
-      return;
-    }
+  // Duplicate title check (case-insensitive, ignore same task)
+  const duplicate = tasks.some(
+    (t) =>
+      t.title.trim().toLowerCase() === form.title.trim().toLowerCase() &&
+      t.id !== editingTask?.id
+  );
+  if (duplicate) {
+    setError("A task with this title already exists.");
+    return;
+  }
 
-    // Past due date check
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const selectedDate = new Date(form.dueDate);
+  // Past due date check
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const selectedDate = new Date(form.dueDate);
 
+  if (!editingTask) {
+    // New task → block all past dates
     if (selectedDate < today) {
-      setConfirmPastDate(true);
+      setError("Due date cannot be in the past.");
       return;
     }
+  } else {
+    // Edit task → block only if user changes date to a past date
+    const originalDate = new Date(editingTask.dueDate);
+    if (
+      form.dueDate !== editingTask.dueDate?.split("T")[0] &&
+      selectedDate < today
+    ) {
+      setError("Due date cannot be set to a past date.");
+      return;
+    }
+  }
 
-    _saveTask();
-  };
+  _saveTask();
+};
+
 
   const _saveTask = async () => {
     try {
@@ -279,6 +293,9 @@ export default function Tasks() {
             value={form.dueDate}
             onChange={handleInputChange}
             InputLabelProps={{ shrink: true }}
+            inputProps={{
+              min: editingTask ? undefined : new Date().toISOString().split("T")[0]
+            }}
           />
           {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
         </DialogContent>
