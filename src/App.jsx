@@ -4,14 +4,18 @@ import { ThemeProvider, CssBaseline } from "@mui/material";
 import { AuthProvider } from "./context/AuthContext";
 import theme from "./theme";
 import "./App.css";
+
 import Login from "./users/login/Login";
 import Register from "./users/register/Register";
 import ProtectedRoute from "./assets/components/ProtectedRoute";
+// import TaskTabs from "./pages/TaskTabs"; // Navbar layout
 import Home from "./pages/Home";
+import TaskTabs from "./pages/TaskTabs";
 import Tasks from "./pages/task/Tasks";
 import ProfileDashboard from "./users/profile/ProfileDashboard";
 import ForgotPassword from "./users/ForgotPassword";
 import ResetPassword from "./users/ResetPassword";
+import Users from "./pages/admin/UserManagement"; // if needed for admin
 
 function App() {
   return (
@@ -20,30 +24,22 @@ function App() {
       <AuthProvider>
         <Router>
           <Routes>
+            {/* Authenticated Layout with Navbar */}
             <Route
-              path="/"
               element={
                 <ProtectedRoute>
-                  <Home />
+                  <TaskTabs />
                 </ProtectedRoute>
               }
-            />
-            <Route
-              path="/tasks"
-              element={
-                <ProtectedRoute>
-                  <Tasks />
-                </ProtectedRoute>
-              }
-            />            
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <ProfileDashboard />
-                </ProtectedRoute>
-              }
-            />
+            >
+              <Route path="/" element={<Home />} />
+              <Route path="/home" element={<Home />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/profile" element={<ProfileDashboard />} />
+              <Route path="/users" element={<Users />} /> {/* Admin only */}
+            </Route>
+
+            {/* Public Routes */}
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
