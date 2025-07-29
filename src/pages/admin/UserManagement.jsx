@@ -293,6 +293,7 @@ export default function UserManagement() {
             value={form.role}
             onChange={handleInputChange}
             error={!!error && error.includes("role")}
+            disabled={editingUser?.id === user?.id} // Prevent self-role change
           >
             <MenuItem value="user">User</MenuItem>
             <MenuItem value="admin">Admin</MenuItem>

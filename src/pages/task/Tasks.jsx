@@ -249,7 +249,16 @@ const _submitTask = () => {
       </Box>
 
       {/* Task Form Dialog */}
-      <Dialog open={modalOpen} onClose={_resetForm} fullWidth maxWidth="sm">
+      <Dialog
+        open={modalOpen}
+        onClose={(event, reason) => {
+          if (reason === "backdropClick") return; // Prevent close on outside click
+          _resetForm();
+        }}
+        fullWidth
+        maxWidth="sm"
+        disableEscapeKeyDown
+      >
         <DialogTitle sx={{ fontWeight: "bold" }}>
           {editingTask ? "Edit Task" : "Add New Task"}
         </DialogTitle>
