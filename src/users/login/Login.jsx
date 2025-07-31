@@ -45,6 +45,12 @@ const LoginForm = () => {
       setFormData({ email: '', password: '' });
       setTimeout(() => navigate('/'), 1000);  
     } catch (err) {
+        const errorMsg = 
+        err?.response?.data?.error || // Axios-style error
+        err?.error ||                  // API error object
+        err?.message ||                // Fallback message
+        'Login failed. Please try again.'; // Default
+
       setError(err.message);
     } finally {
       setLoading(false);
@@ -68,10 +74,16 @@ const LoginForm = () => {
         >
           Login
         </Box>
-
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
-
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+        {success && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {success}
+          </Alert>
+        )}
         <form onSubmit={handleSubmit}>
           <TextField
             fullWidth
