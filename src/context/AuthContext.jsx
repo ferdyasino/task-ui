@@ -45,8 +45,16 @@ export const AuthProvider = ({ children }) => {
     });
 
     if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Login failed: ${errText || response.status}`);
+      let errorMessage = "Login failed. Please try again.";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch {
+        // If not JSON, use raw text
+        const errorText = await response.text();
+        if (errorText) errorMessage = errorText;
+      }
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();

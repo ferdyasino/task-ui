@@ -1,4 +1,3 @@
-// api/apiClient.js
 import API_BASE from "./apiConfig";
 import { getExternalLogout } from "./../context/AuthContext";
 
@@ -18,13 +17,18 @@ const handleUnauthorized = (response) => {
 const fetchWithAuth = async (url, options = {}) => {
   const token = getAuthToken();
 
+  // Detect FormData and set headers accordingly
+  const isFormData = options.body instanceof FormData;
+
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
+    ...options.headers,
+  };
+
   const response = await fetch(`${API_BASE}${url}`, {
     ...options,
-    headers: {
-      ...options.headers,
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers,
   });
 
   if (!response.ok) {

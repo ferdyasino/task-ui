@@ -19,14 +19,19 @@ import {
   MenuItem,
   Alert,
 } from "@mui/material";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+
 import {
   getAllTasks,
   createTask,
   deleteTask,
   updateTask,
+  deleteTaskFile,
 } from "../../api/tasks";
 
 export default function Tasks() {
+  const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
   const [tasks, setTasks] = useState([]);
   const [selected, setSelected] = useState([]);
   const [error, setError] = useState("");
@@ -37,8 +42,11 @@ export default function Tasks() {
     description: "",
     status: "pending",
     dueDate: "",
+    file: null,
   });
   const [editingTask, setEditingTask] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
 
   useEffect(() => {
     _getAllTasks();
@@ -65,10 +73,10 @@ export default function Tasks() {
   };
 
   const _deleteTasks = async () => {
+    if (!window.confirm(`Are you sure you want to delete ${selected.length} task(s)?`)) return;
+
     try {
-      for (let id of selected) {
-        await deleteTask(id);
-      }
+      await Promise.all(selected.map((id) => deleteTask(id)));
       setTasks((prev) => prev.filter((task) => !selected.includes(task.id)));
       setSelected([]);
       setError("");
@@ -78,61 +86,92 @@ export default function Tasks() {
     }
   };
 
+  const _deleteFile = async (taskId, fileId) => {
+    if (!window.confirm("Are you sure you want to delete this file?")) return;
+
+    try {
+      await deleteTaskFile(taskId, fileId);
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === taskId
+            ? { ...task, TaskFiles: (task.TaskFiles || []).filter((f) => f.id !== fileId) }
+            : task
+        )
+      );
+      setPreviewOpen(false);
+      setError("");
+    } catch (err) {
+      console.error("Delete file error:", err.message);
+      setError(err.message || "Failed to delete file.");
+    }
+  };
+
   const handleInputChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-const _submitTask = () => {
-  if (!form.title.trim() || !form.dueDate) {
-    setError("Title and Due Date are required.");
-    return;
-  }
+  const _submitTask = () => {
+    if (!form.title.trim() || !form.dueDate) {
+      setError("Title and Due Date are required.");
+      return;
+    }
 
-  // Duplicate title check (case-insensitive, ignore same task)
-  const duplicate = tasks.some(
-    (t) =>
-      t.title.trim().toLowerCase() === form.title.trim().toLowerCase() &&
-      t.id !== editingTask?.id
-  );
-  if (duplicate) {
-    setError("A task with this title already exists.");
-    return;
-  }
+    const duplicate = tasks.some(
+      (t) =>
+        t.title.trim().toLowerCase() === form.title.trim().toLowerCase() &&
+        t.id !== editingTask?.id
+    );
+    if (duplicate) {
+      setError("A task with this title already exists.");
+      return;
+    }
 
-  // Past due date check
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const selectedDate = new Date(form.dueDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(form.dueDate);
 
-  if (!editingTask) {
-    // New task → block all past dates
-    if (selectedDate < today) {
+    if (!editingTask && selectedDate < today) {
       setError("Due date cannot be in the past.");
       return;
     }
-  } else {
-    // Edit task → block only if user changes date to a past date
-    const originalDate = new Date(editingTask.dueDate);
-    if (
-      form.dueDate !== editingTask.dueDate?.split("T")[0] &&
-      selectedDate < today
-    ) {
-      setError("Due date cannot be set to a past date.");
-      return;
+
+    if (editingTask) {
+      const originalDate = new Date(editingTask.dueDate);
+      const originalDateStr = originalDate.toISOString().split("T")[0];
+      if (form.dueDate !== originalDateStr && selectedDate < today) {
+        setError("Due date cannot be set to a past date.");
+        return;
+      }
     }
-  }
 
-  _saveTask();
-};
-
+    _saveTask();
+  };
 
   const _saveTask = async () => {
     try {
-      if (editingTask) {
-        await updateTask(editingTask.id, form);
+      let payload;
+      if (form.file) {
+        payload = new FormData();
+        payload.append("title", form.title);
+        payload.append("description", form.description);
+        payload.append("status", form.status);
+        payload.append("dueDate", form.dueDate);
+        payload.append("file", form.file);
       } else {
-        await createTask(form);
+        payload = {
+          title: form.title,
+          description: form.description,
+          status: form.status,
+          dueDate: form.dueDate,
+        };
       }
+
+      if (editingTask) {
+        await updateTask(editingTask.id, payload);
+      } else {
+        await createTask(payload);
+      }
+
       await _getAllTasks();
       _resetForm();
     } catch (err) {
@@ -144,7 +183,13 @@ const _submitTask = () => {
   const _resetForm = () => {
     setModalOpen(false);
     setEditingTask(null);
-    setForm({ title: "", description: "", status: "pending", dueDate: "" });
+    setForm({
+      title: "",
+      description: "",
+      status: "pending",
+      dueDate: "",
+      file: null,
+    });
     setError("");
     setConfirmPastDate(false);
   };
@@ -165,26 +210,19 @@ const _submitTask = () => {
                 mr: 1,
                 color: "white",
                 background: "linear-gradient(to right, #4a90e2, #0052cc)",
-                "&:hover": {
-                  background: "linear-gradient(to right, #0052cc, #4a90e2)",
-                },
+                "&:hover": { background: "linear-gradient(to right, #0052cc, #4a90e2)" },
               }}
               onClick={() => {
                 setModalOpen(true);
                 setEditingTask(null);
-                setForm({ title: "", description: "", status: "pending", dueDate: "" });
+                setForm({ title: "", description: "", status: "pending", dueDate: "", file: null });
                 setError("");
               }}
             >
               Add Task +
             </Button>
           )}
-          <Button
-            variant="outlined"
-            color="error"
-            disabled={selected.length === 0}
-            onClick={_deleteTasks}
-          >
+          <Button variant="outlined" color="error" disabled={selected.length === 0} onClick={_deleteTasks}>
             Delete
           </Button>
         </Box>
@@ -200,6 +238,7 @@ const _submitTask = () => {
               <TableCell><strong>Description</strong></TableCell>
               <TableCell><strong>Status</strong></TableCell>
               <TableCell><strong>Due Date</strong></TableCell>
+              <TableCell><strong>File</strong></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -215,6 +254,7 @@ const _submitTask = () => {
                     description: task.description || "",
                     status: task.status || "pending",
                     dueDate: task.dueDate?.split("T")[0] || "",
+                    file: null,
                   });
                   setError("");
                 }}
@@ -230,10 +270,73 @@ const _submitTask = () => {
                 <TableCell>{task.title || "—"}</TableCell>
                 <TableCell>{task.description || "—"}</TableCell>
                 <TableCell>{task.status || "—"}</TableCell>
+                <TableCell>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "—"}</TableCell>
                 <TableCell>
-                  {task.dueDate
-                    ? new Date(task.dueDate).toLocaleDateString()
-                    : "—"}
+                  {task.TaskFiles?.length > 0 ? (
+                    task.TaskFiles.map((file) => {
+                      const ext = file.filetype?.toLowerCase() || "";
+                      const isImage = ext.startsWith("image/");
+                      const isVideo = ext.startsWith("video/");
+
+                      return (
+                        <Box
+                          key={file.id}
+                          sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {isImage && (
+                            <img
+                              src={file.fileurl}
+                              alt={file.filename}
+                              onClick={() => {
+                                setPreviewFile({ ...file, taskId: task.id });
+                                setPreviewOpen(true);
+                              }}
+                              style={{
+                                width: 60,
+                                height: 40,
+                                objectFit: "cover",
+                                borderRadius: 4,
+                                border: "1px solid #ccc",
+                                cursor: "pointer"
+                              }}
+                            />
+                          )}
+
+                          {isVideo && (
+                            <video
+                              src={file.fileurl}
+                              onClick={() => {
+                                setPreviewFile({ ...file, taskId: task.id });
+                                setPreviewOpen(true);
+                              }}
+                              style={{
+                                width: 100,
+                                height: 60,
+                                borderRadius: 4,
+                                border: "1px solid #ccc",
+                                cursor: "pointer",
+                                objectFit: "cover"
+                              }}
+                            />
+                          )}
+
+                          {!isImage && !isVideo && (
+                            <a
+                              href={file.fileurl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ fontSize: 12, color: "#1976d2" }}
+                            >
+                              {file.filename}
+                            </a>
+                          )}
+                        </Box>
+                      );
+                    })
+                  ) : (
+                    "—"
+                  )}
                 </TableCell>
               </TableRow>
             ))}
@@ -241,7 +344,7 @@ const _submitTask = () => {
         </Table>
       </TableContainer>
 
-      {/* Task Stats */}
+      {/* Stats */}
       <Box sx={{ mt: 2 }}>
         <Typography variant="body2">
           {tasks.length} tasks — {pendingCount} pending, {doneCount} done
@@ -249,102 +352,62 @@ const _submitTask = () => {
       </Box>
 
       {/* Task Form Dialog */}
-      <Dialog
-        open={modalOpen}
-        onClose={(event, reason) => {
-          if (reason === "backdropClick") return; // Prevent close on outside click
-          _resetForm();
-        }}
-        fullWidth
-        maxWidth="sm"
-        disableEscapeKeyDown
-      >
-        <DialogTitle sx={{ fontWeight: "bold" }}>
-          {editingTask ? "Edit Task" : "Add New Task"}
-        </DialogTitle>
-        <DialogContent sx={{ pt: 1 }}>
-          <TextField
-            fullWidth
-            margin="normal"
-            name="title"
-            label="Title"
-            value={form.title}
-            onChange={handleInputChange}
-            required
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            name="description"
-            label="Description"
-            value={form.description}
-            onChange={handleInputChange}
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            name="status"
-            label="Status"
-            select
-            value={form.status}
-            onChange={handleInputChange}
-          >
+      <Dialog open={modalOpen} onClose={(e, r) => { if (r !== "backdropClick") _resetForm(); }} fullWidth maxWidth="sm" disableEscapeKeyDown>
+        <DialogTitle>{editingTask ? "Edit Task" : "Add New Task"}</DialogTitle>
+        <DialogContent>
+          <TextField fullWidth margin="normal" name="title" label="Title" value={form.title} onChange={handleInputChange}/>
+          <TextField fullWidth margin="normal" name="description" label="Description" value={form.description} onChange={handleInputChange}/>
+          <TextField fullWidth margin="normal" name="status" label="Status" select value={form.status} onChange={handleInputChange}>
             <MenuItem value="pending">Pending</MenuItem>
             <MenuItem value="in-progress">In Progress</MenuItem>
             <MenuItem value="done">Done</MenuItem>
           </TextField>
-          <TextField
-            fullWidth
-            margin="normal"
-            name="dueDate"
-            label="Due Date"
-            type="date"
-            value={form.dueDate}
-            onChange={handleInputChange}
-            InputLabelProps={{ shrink: true }}
-            inputProps={{
-              min: editingTask ? undefined : new Date().toISOString().split("T")[0]
-            }}
-          />
+          <TextField fullWidth margin="normal" name="dueDate" label="Due Date" type="date" value={form.dueDate} onChange={handleInputChange} InputLabelProps={{ shrink: true }}/>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" fontWeight="bold">Attach File</Typography>
+            <input type="file" accept=".pdf,.doc,.docx,.jpg,.png" onChange={(e) => setForm((prev) => ({ ...prev, file: e.target.files[0] || null }))}/>
+            {form.file && <Typography variant="caption">Selected: {form.file.name}</Typography>}
+          </Box>
           {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
         </DialogContent>
         <DialogActions>
           <Button onClick={_resetForm}>Cancel</Button>
-          <Button
-            onClick={_submitTask}
-            variant="contained"
-            sx={{
-              fontWeight: "bold",
-              color: "white",
-              background: "linear-gradient(to right, #4a90e2, #0052cc)",
-              "&:hover": {
-                background: "linear-gradient(to right, #0052cc, #4a90e2)",
-              },
-            }}
-          >
-            {editingTask ? "Update" : "Add"}
-          </Button>
+          <Button onClick={_submitTask} variant="contained">{editingTask ? "Update" : "Add"}</Button>
         </DialogActions>
       </Dialog>
 
-      {/* Past Due Date Confirmation */}
-      <Dialog open={confirmPastDate} onClose={() => setConfirmPastDate(false)}>
-        <DialogTitle>Past Due Date</DialogTitle>
-        <DialogContent>
-          The selected due date is in the past. Are you sure you want to proceed?
+      {/* Preview Dialog */}
+      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {previewFile?.filename}
+          <DeleteForeverIcon color="error" sx={{ cursor: "pointer" }} onClick={() => _deleteFile(previewFile.taskId, previewFile.id)}/>
+        </DialogTitle>
+        <DialogContent sx={{ display: "flex", justifyContent: "center" }}>
+          {previewFile?.filetype?.startsWith("image/") && (
+            <img
+              src={previewFile.fileurl}
+              alt={previewFile.filename}
+              style={{
+                maxWidth: "100%",
+                maxHeight: "80vh",
+                objectFit: "contain"
+              }}
+            />
+          )}
+          {previewFile?.filetype?.startsWith("video/") && (
+            <video
+              src={previewFile.fileurl}
+              controls
+              autoPlay
+              style={{
+                maxWidth: "100%",
+                maxHeight: "80vh"
+              }}
+            />
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmPastDate(false)}>Cancel</Button>
-          <Button
-            onClick={() => {
-              setConfirmPastDate(false);
-              _saveTask();
-            }}
-            variant="contained"
-            color="warning"
-          >
-            Proceed Anyway
-          </Button>
+          <Button onClick={() => setPreviewOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>
